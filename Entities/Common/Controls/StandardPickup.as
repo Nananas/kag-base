@@ -162,7 +162,8 @@ void onTick(CBlob@ this)
 			ClearPickupBlobs(this);
 			client_SendThrowCommand(this);
 			this.set_bool("release click", false);
-
+			// keep track of what was just dropped
+			this.set_u16("just dropped", carryBlob.getNetworkID());
 		}
 		else
 		{
@@ -257,13 +258,17 @@ void onTick(CBlob@ this)
 
 		if (this.isKeyJustReleased(key_pickup))
 		{
-			if (this.get_bool("release click"))
+			CBlob@[]@ closestBlobs;
+			this.get("closest blobs", @closestBlobs);
+			if (closestBlobs.length > 0)
 			{
-				CBlob@[]@ closestBlobs;
-				this.get("closest blobs", @closestBlobs);
-				if (closestBlobs.length > 0)
+				u16 just_dropped_id = this.get_u16("just dropped");
+				
+				if (this.get_bool("release click") || 
+                   (!isTapPickup(this) && just_dropped_id != closestBlobs[0].getNetworkID()))
 				{
 					server_Pickup(this, this, closestBlobs[0]);
+					this.set_u16("just dropped", 0);
 				}
 			}
 			ClearPickupBlobs(this);
